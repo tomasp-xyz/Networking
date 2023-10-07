@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "EIGRP stub area and route manipulation"
+title: "EIGRP stub router and route manipulation"
 categories: routing
 ---
 
