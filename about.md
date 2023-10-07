@@ -9,5 +9,5 @@ Hi, welcome to this page. It is dedicated solely for write ups of my learning ex
 In other words, I'm simply documenting my own thought process here "out loud" while trying to learn or solidify knowledge in a specific area of computer networking :).
 
 ## Socials
-LinkedIn: https://www.linkedin.com/in/tomas-pro%C5%A1kus-768280139/ <br>
-GitHub: https://github.com/tomasp-xyz
+[LinkedIn](https://www.linkedin.com/in/tomas-pro%C5%A1kus-768280139/) <br>
+[GitHub](https://github.com/tomasp-xyz)
