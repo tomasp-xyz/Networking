@@ -4,6 +4,8 @@ title: "Basic MPLS configuration [OSPF IGP+BGP]"
 categories: misc
 ---
 
+_Note - images seem broken due to this repo going from private to public, I'll try to fix it at some point in time_
+
 I've wanted to configure IP/MPLS based network for a while now, but never got around to it, because MPLS was simply too tough of a topic to handle. However, it is one of the basic requirements for ENARSI so basic knowledge of it is going to be mandatory to pass the certification so I might as well get to work :)
 
 Note - this is a learning experience from https://www.rogerperkin.co.uk/ccie/mpls/cisco-mpls-tutorial/ - I must leave credit and a thanks for the fine work of Mr. Roger.
