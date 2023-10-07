@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Basic MPLS configuration [OSPF IGP+BGP]"
-categories: misc
+categories: mpls, routing
 ---
 
 _Note - images seem broken due to this repo going from private to public, I'll try to fix it at some point in time_
