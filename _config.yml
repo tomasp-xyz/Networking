@@ -2,8 +2,8 @@ remote_theme: jekyll/minima
 title: Networking stuff
 #author:
 #  name: tomas
-#description:
-#  Test desc
+description:
+  Anything networking-related, from concepts to my own learnings
 
 minima:
   skin: dark
