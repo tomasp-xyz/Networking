@@ -4,8 +4,6 @@ title: "Basic MPLS configuration [OSPF IGP+BGP]"
 categories: mpls, routing
 ---
 
-_Note - images seem broken due to this repo going from private to public, I'll try to fix it at some point in time_
-
 I've wanted to configure IP/MPLS based network for a while now, but never got around to it, because MPLS was simply too tough of a topic to handle. However, it is one of the basic requirements for ENARSI so basic knowledge of it is going to be mandatory to pass the certification so I might as well get to work :)
 
 Note - this is a learning experience from https://www.rogerperkin.co.uk/ccie/mpls/cisco-mpls-tutorial/ - I must leave credit and a thanks for the fine work of Mr. Roger.
@@ -13,7 +11,8 @@ Note - this is a learning experience from https://www.rogerperkin.co.uk/ccie/mpl
 # Step 1: topology & config preparation
 For this lab, I shall use 1 router (R3) to represent P router, 2 routers (R2 & R4) as PE and 2 routers (R1 & R5) as CPE
 
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/315f2349-f91f-4711-ba61-4f7f9c0947c8)
+![image](https://github.com/tomasp-xyz/Networking/assets/108157159/7404ae6d-ec51-458b-8571-024ad09235d5)
+
 
 Below is LLD of addressing in this topology (using /31s as I've seen them in MPLS network before and quite like the idea of addressing reservation):
 
@@ -286,11 +285,15 @@ R4#show mpls ldp neighbor
           10.0.0.3        10.0.0.4        3.3.3.3
 ```
 
-The conclusion I can draw from this output is that LDP uses TCP port 646 to establish LDP connection. I believe it uses UDP port 646 to send LDP Hello messages, so just to be sure, below I've got a PCAP of it. Rather interesting that LDP uses both multicast and unicast for Hellos, but unicast runs on TCP:
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/37bf312e-7c2c-40d5-93ad-55b71623177d)
+The conclusion I can draw from this output is that LDP uses TCP port 646 to establish LDP connection. I believe it uses UDP port 646 to send LDP Hello messages on the same subnet, so just to be sure, below I've got a PCAP of it. Rather interesting that LDP uses both multicast and unicast for Hellos. Unicast TCP Hello packets are used for what's known as tLDP session establishment and maitenance:
+![image](https://github.com/tomasp-xyz/Networking/assets/108157159/50c2fec7-6aaa-493b-ba7f-1298883b3d6d)
 
-While UDP is used to send Hellos to multicast address:
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/03d456a1-6715-4eb7-93d7-6020c1f97474)
+![image](https://github.com/tomasp-xyz/Networking/assets/108157159/e94184e1-57ae-4d0a-b9b9-1a30f8460ccb)
+
+
+While UDP is used to send Hellos to multicast address on a link (meaning it cannot traverse subnets):
+![image](https://github.com/tomasp-xyz/Networking/assets/108157159/08adef18-a236-4dd4-94fe-1336760f3360)
+
 
 We can also check the traceroute of R2 trying to reach R4 lo0. MPLS label 18 is used to reach R4
 ```
@@ -353,13 +356,7 @@ VRF info: (vrf in name/id, vrf out name/id)
 
 According to `show mpls forwarding-table` output, R2 is considered as an ingress MPLS PE router and it marks any packets coming from R1 and destined for R5 with label 19. This label is then forwarded onwards to R3, which doesn't seem to do anything with the label and simply switches it towards R4. Now, R4 sees that a packet with this label should be going out via interface g0/1 and that there should be no label applied for the packet.
 
-In fact, while observing the pcap, we can see that R4's interface g0/0 (essentially facing R1) receives packet with MPLS label 19:
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/f9fd05d8-5caf-4ff9-b100-0308c81b3928)
-
-But it forwards this same packet without any label out of its interface g0/1
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/397bc00c-cb5f-4534-afc5-89e617e5186f)
-
-Therefore, this proves that the "No label" state in the MPLS forwarding table simply means that we're removing MPLS label when specified egress interface is used for packet forwarding.
+In fact, we can tell that R4's interface g0/0 (essentially facing R1) will receive packets with MPLS label 19, but it forwards this same packet without any label out of its interface g0/1. Therefore, this proves that the "No label" state in the MPLS forwarding table simply means that we're removing MPLS label when specified egress interface is used for packet forwarding.
 
 I think a similar result would be visible if we were to use ISIS (or EIGRP?) as our underlay IGP, because it seems that all we needed to do was establish connectivity between all routers (and their loopback ifaces) and enable MPLS/LDP on P/PE routers.
 
@@ -720,12 +717,6 @@ VRF info: (vrf in name/id, vrf out name/id)
   3 10.0.0.1 [MPLS: Label 21 Exp 0] 4 msec 3 msec 4 msec
   4 10.0.0.0 4 msec 4 msec *
 ```
-
-Pcaps prove it (this is from the perspective of R4's g0/0):
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/5cb51326-d0a5-4281-b1ab-b5fe34f86433)
-
-Below is a sample pcap from R2's g0/1:
-![image](https://github.com/tomasp-xyz/Networking/assets/108157159/9c7ebb9b-52e0-4394-b317-127eea9aa23e)
 
 What seems to be happening here is PE routers are applying two labels now - one is bottom of the stack label 21 and the other is for MPLS switching over core 18 when looking from R4 PE perspective. Label 18 is removed when it goes through P router R3 towards PE router R2. At this point, packet has only one MPLS label remaining - 21. On R2, this label is considered as `No Label` and therefore label is removed when it's switched towards CPE R1.
 
