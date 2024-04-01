@@ -33,6 +33,7 @@ To start things off, I need to setup everything as described in the addressing s
 <details>
   <summary>Click me for basic config - Hub 0 (main)</summary>
   
+```  
 ena
 conf t
 hostname HUB0_MAIN
@@ -61,12 +62,14 @@ tunnel mode gre multipoint
 tunnel source lo0
 tunnel key 1234
 !
+```
 
 </details>
 
 <details>
   <summary>Click me for basic config - Hub 1</summary>
-  
+
+  ```
 ena
 conf t
 hostname HUB1
@@ -105,12 +108,14 @@ tunnel mode gre multipoint
 tunnel source lo0
 tunnel key 4321
 !
+```
 
 </details>
   
 <details>
   <summary>Click me for basic config - Hub 2</summary>
 
+  ```
 ena
 conf t
 hostname HUB2
@@ -150,12 +155,14 @@ tunnel mode gre multipoint
 tunnel source lo0
 tunnel key 4321
 !
+```
 
 </details>
 
 <details>
   <summary>Click me for basic config - Spoke 1</summary>
 
+```
 enab
 conf t
 hostname SPOKE1
@@ -180,12 +187,14 @@ tunnel mode gre multipoint
 tunnel source g0/2
 tunnel key 4321
 !
+```
 
 </details>
 
 <details>
   <summary>Click me for basic config - Spoke 2</summary>
 
+  ```
 enab
 conf t
 hostname SPOKE2
@@ -210,6 +219,7 @@ tunnel mode gre multipoint
 tunnel source g0/2
 tunnel key 4321
 !
+```
 
 </details>
 
