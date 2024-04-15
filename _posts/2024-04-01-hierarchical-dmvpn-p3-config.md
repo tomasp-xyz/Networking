@@ -490,6 +490,114 @@ Type:Spoke, NHRP Peers:1,
 
 To conclude everything up until this point, by establishing OSPF neighborships via P2P interfaces and redistributing all locally connected routes between main hub & downstream hubs, each router is able to reach each other's loopback IP addresses which results in NHRP tables getting populated with each router respective loopback IP address (NBMAs). Due to this, we are now able to tunnel data via GRE interfaces.
 
-Next up, I'll need to configure spokes.
+# Step 4 - IPsec configuration on hubs
+
+Quickly configuring IPsec here to protect traffic that's being transported via mGRE tunnels. I skipped IPsec config initially to simplify hub configuration, but at this point not much else besides IPsec has to be configured on all hubs. Quite a lot of IPsec configuration overlaps. For **hub 1** and **hub 2**, the following configuration should do the trick:
+
+```
+
+crypto isakmp policy 1
+ encr aes 256
+ hash sha512
+ authentication pre-share
+ group 16
+ lifetime 3600
+
+crypto isakmp key ike_auth address 0.0.0.0
+crypto ipsec transform-set sec_DMVPN ah-sha512-hmac esp-aes 256
+ mode transport
+crypto ipsec transform-set sec_HUB-p2p ah-sha512-hmac esp-aes 256
+ mode transport
+crypto ipsec profile hub_profile
+ set transform-set sec_DMVPN
+crypto ipsec profile sec_HUB-p2p
+ set transform-set sec_HUB-p2p
+int 1
+ tunnel protection ipsec profile hub_profile
+int 2
+ tunnel protection ipsec profile sec_HUB-p2p
+
+```
+
+This should establish IPsec connection to the central hub and also protect any traffic coming in from spokes. The following IPsec configuration is for central hub only:
+
+```
+
+crypto isakmp policy 1
+ encr aes 256
+ hash sha512
+ authentication pre-share
+ group 16
+ lifetime 3600
+crypto isakmp key ike_auth address 0.0.0.0
+crypto ipsec transform-set sec_DMVPN ah-sha512-hmac esp-aes 256
+ mode transport
+crypto ipsec profile hub_profile
+ set transform-set sec_DMVPN
+ responder-only
+int tun1
+ tunnel protection ipsec profile hub_profile
+
+```
+
+Verifying ISAKMP and IPsec status between central and regional hubs:
+
+```
+HUB0_MAIN#show crypto session
+Crypto session current status
+
+Interface: Tunnel1
+Session status: UP-ACTIVE
+Peer: 11.11.11.11 port 500
+  Session ID: 0
+  IKEv1 SA: local 1.1.1.1/500 remote 11.11.11.11/500 Active
+  IPSEC FLOW: permit 47 host 1.1.1.1 host 11.11.11.11
+        Active SAs: 4, origin: crypto map
+
+Interface: Tunnel1
+Session status: UP-ACTIVE
+Peer: 22.22.22.22 port 500
+  Session ID: 0
+  IKEv1 SA: local 1.1.1.1/500 remote 22.22.22.22/500 Active
+  IPSEC FLOW: permit 47 host 1.1.1.1 host 22.22.22.22
+        Active SAs: 4, origin: crypto map
+
+HUB0_MAIN#show crypto ipsec sa
+
+interface: Tunnel1
+    Crypto map tag: Tunnel1-head-0, local addr 1.1.1.1
+
+   protected vrf: (none)
+   local  ident (addr/mask/prot/port): (1.1.1.1/255.255.255.255/47/0)
+   remote ident (addr/mask/prot/port): (11.11.11.11/255.255.255.255/47/0)
+   current_peer 11.11.11.11 port 500
+     PERMIT, flags={origin_is_acl,}
+    #pkts encaps: 320, #pkts encrypt: 320, #pkts digest: 320
+    #pkts decaps: 320, #pkts decrypt: 320, #pkts verify: 320
+    #pkts compressed: 0, #pkts decompressed: 0
+    #pkts not compressed: 0, #pkts compr. failed: 0
+    #pkts not decompressed: 0, #pkts decompress failed: 0
+    #send errors 0, #recv errors 0
+
+------- some output was removed to save space -------
+
+   protected vrf: (none)
+   local  ident (addr/mask/prot/port): (1.1.1.1/255.255.255.255/47/0)
+   remote ident (addr/mask/prot/port): (22.22.22.22/255.255.255.255/47/0)
+   current_peer 22.22.22.22 port 500
+     PERMIT, flags={origin_is_acl,}
+    #pkts encaps: 673, #pkts encrypt: 673, #pkts digest: 673
+    #pkts decaps: 674, #pkts decrypt: 674, #pkts verify: 674
+    #pkts compressed: 0, #pkts decompressed: 0
+    #pkts not compressed: 0, #pkts compr. failed: 0
+    #pkts not decompressed: 0, #pkts decompress failed: 0
+    #send errors 0, #recv errors 0
+
+
+```
+
+Okay, so we're seeing that protection between regional hubs and central hub is working, packets are being encrypted/decrypted. Now, let's proceed with spokes configuration, this time configuring everything at once.
+
+# Step 5 - Spokes setup
 
 --------- to be continued later on ----------
